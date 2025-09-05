@@ -1,73 +1,61 @@
 import os
 import subprocess
-from flask import Flask, send_from_directory, render_template_string, request
+from flask import Flask, send_from_directory, request, jsonify
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="frontend/dist", static_url_path="")
 
-# Serve episodes
+# --------------------
+# Frontend routes
+# --------------------
+@app.route("/")
+def index():
+    return send_from_directory(app.static_folder, "index.html")
+
+
+# --------------------
+# Episodes API
+# --------------------
+@app.route("/episodes")
+def list_episodes():
+    os.makedirs("episodes", exist_ok=True)
+    files = [f for f in os.listdir("episodes") if f.endswith(".mp3")]
+    return jsonify(files)
+
+
 @app.route("/episodes/<path:filename>")
-def episodes(filename):
+def serve_episode(filename):
     return send_from_directory("episodes", filename)
 
-# Homepage
-@app.route("/")
-def home():
-    return render_template_string("""
-    <!DOCTYPE html>
-    <html lang="en">
+
+# --------------------
+# Admin page
+# --------------------
+@app.route("/admin")
+def admin_page():
+    return """
+    <html>
     <head>
-        <meta charset="UTF-8">
-        <title>Constitution Vibes</title>
+        <title>Admin Panel</title>
         <style>
-            body, html { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial; }
-            video.bg { position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1; }
-            .content { position:relative; text-align:center; top:30%; color:white; }
-            h1 { font-size:3em; text-shadow:2px 2px 6px black; }
-            ul { list-style:none; padding:0; }
-            li { margin:20px 0; font-size:1.2em; }
-            audio { width:70%; margin-top:10px; }
+            body { background: #111; color: #fff; font-family: Arial; text-align: center; }
+            form { margin-top: 50px; }
+            input, button { padding: 10px; margin: 10px; }
+            a { color: #0f9; text-decoration: none; }
+            a:hover { text-decoration: underline; }
         </style>
     </head>
     <body>
-        <video autoplay loop muted playsinline class="bg">
-            <source src="/static/Kenya_flag.mp4" type="video/mp4">
-        </video>
-        <div class="content">
-            <h1>🇰🇪 Constitution Vibes Podcast</h1>
-            <h3>Latest Episodes:</h3>
-            <ul>
-                {% for file in files %}
-                <li>
-                    🎧 {{file}} <br>
-                    <audio controls preload="none">
-                        <source src="/episodes/{{file}}" type="audio/mpeg">
-                        Your browser does not support the audio element.
-                    </audio>
-                </li>
-                {% endfor %}
-            </ul>
-            <p><a href="/admin" style="color:#0f9;">Admin Panel</a></p>
-        </div>
-    </body>
-    </html>
-    """, files=[f for f in os.listdir("episodes") if f.endswith(".mp3")])
-
-# Admin page
-@app.route("/admin")
-def admin():
-    return """
-    <html>
-    <body style='background:#111; color:white; text-align:center; font-family:Arial'>
-        <h2>🔐 Admin Panel</h2>
-        <form method="post" action="/admin/regenerate">
-            <input type="password" name="password" placeholder="Password">
+        <h2>🔐 Constitution Vibes Admin</h2>
+        <form method="POST" action="/admin/regenerate">
+            <input type="password" name="password" placeholder="Enter Admin Password" required>
+            <br>
             <button type="submit">Regenerate Episodes</button>
         </form>
     </body>
     </html>
     """
 
-# Regenerate episodes
+
 @app.route("/admin/regenerate", methods=["POST"])
 def regenerate():
     password = request.form.get("password")
@@ -75,7 +63,7 @@ def regenerate():
         return "❌ Wrong password", 403
 
     try:
-        subprocess.run(["python", "podcast.py"], check=True)
+        subprocess.run(["python", "kenya_constitution_podcast.py"], check=True)
 
         files = [f for f in os.listdir("episodes") if f.endswith(".mp3")]
         episode_blocks = "".join([
@@ -95,10 +83,12 @@ def regenerate():
         <head>
             <title>Episodes Regenerated</title>
             <style>
-                body {{ background:#111; color:white; font-family:Arial; text-align:center; }}
-                ul {{ list-style:none; padding:0; }}
-                li {{ margin:15px 0; }}
-                a {{ color:#0f9; }}
+                body {{ background: #111; color: #fff; font-family: Arial; text-align: center; }}
+                ul {{ list-style: none; padding: 0; }}
+                li {{ margin: 15px 0; }}
+                audio {{ outline: none; }}
+                a {{ color: #0f9; text-decoration: none; }}
+                a:hover {{ text-decoration: underline; }}
             </style>
         </head>
         <body>
@@ -113,6 +103,18 @@ def regenerate():
     except Exception as e:
         return f"⚠️ Error: {str(e)}", 500
 
+
+# --------------------
+# Serve static frontend
+# --------------------
+@app.errorhandler(404)
+def not_found(e):
+    return send_from_directory(app.static_folder, "index.html")
+
+
+# --------------------
+# Run locally
+# --------------------
 if __name__ == "__main__":
-    os.makedirs("episodes", exist_ok=True)
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
