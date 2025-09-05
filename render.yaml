@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: constitution-vibes
+    env: python
+    buildCommand: "pip install -r requirements.txt && cd frontend && npm install && npm run build"
+    startCommand: "python app.py"
+    plan: free
