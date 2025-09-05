@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Extra polish */
+.glass {
+  backdrop-filter: blur(8px);
+  background: rgba(17, 24, 39, 0.75); /* slate-900 with opacity */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
