@@ -3,6 +3,7 @@ import os
 
 app = Flask(__name__, static_folder="frontend/dist", static_url_path="")
 
+# API endpoint for episodes
 @app.route("/api/episodes")
 def episodes():
     return jsonify([
@@ -10,10 +11,12 @@ def episodes():
         {"title": "Episode 2", "date": "2025-02-01", "audio": "/sample2.mp3"}
     ])
 
+# Serve React index.html
 @app.route("/")
 def serve_index():
     return send_from_directory(app.static_folder, "index.html")
 
+# Serve static files (CSS, JS, media, etc.)
 @app.route("/<path:path>")
 def serve_static(path):
     file_path = os.path.join(app.static_folder, path)
