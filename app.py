@@ -1,41 +1,51 @@
-from flask import Flask, send_from_directory, jsonify
 import os
-import subprocess
+from flask import Flask, send_from_directory, jsonify
 
-app = Flask(__name__, static_folder="static")
+app = Flask(__name__, static_folder="frontend/dist", static_url_path="")
 
-# Ensure podcast.py runs at startup to generate anthem.mp3
-try:
-    print("🔊 Running podcast.py to generate anthem and episodes...")
-    subprocess.run(["python", "podcast.py"], check=True)
-except Exception as e:
-    print("⚠️ Error running podcast.py:", e)
+# --- Config ---
+EPISODES_DIR = os.path.join("static", "episodes")
+STATIC_DIR = "static"
 
+os.makedirs(EPISODES_DIR, exist_ok=True)
+
+
+# Serve frontend
 @app.route("/")
 def index():
-    return send_from_directory("frontend/dist", "index.html")
+    return send_from_directory(app.static_folder, "index.html")
 
-@app.route("/<path:path>")
-def serve_frontend(path):
-    full_path = os.path.join("frontend/dist", path)
-    if os.path.exists(full_path):
-        return send_from_directory("frontend/dist", path)
-    return send_from_directory("frontend/dist", "index.html")
 
+# Serve frontend routes (for React router support)
+@app.errorhandler(404)
+def not_found(e):
+    return send_from_directory(app.static_folder, "index.html")
+
+
+# Get list of episodes
+@app.route("/episodes")
+def list_episodes():
+    try:
+        files = [
+            f for f in os.listdir(EPISODES_DIR)
+            if f.endswith(".mp3")
+        ]
+        return jsonify(files)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Serve specific episode file
+@app.route("/episodes/<path:filename>")
+def get_episode(filename):
+    return send_from_directory(EPISODES_DIR, filename)
+
+
+# Serve static files (anthem, flag video, etc.)
 @app.route("/static/<path:filename>")
 def static_files(filename):
-    return send_from_directory(app.static_folder, filename)
+    return send_from_directory(STATIC_DIR, filename)
 
-@app.route("/episodes")
-def episodes():
-    episodes = []
-    for file in os.listdir("static"):
-        if file.endswith(".mp3"):
-            episodes.append({
-                "title": file.replace(".mp3", ""),
-                "url": f"/static/{file}"
-            })
-    return jsonify(episodes)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
