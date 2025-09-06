@@ -1,7 +1,8 @@
 {
-  "name": "constitution-vibes",
+  "name": "constitution-vibes-frontend",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -12,10 +13,10 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.2",
-    "tailwindcss": "^3.4.13",
-    "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.40",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.10",
     "vite": "^5.4.10"
   }
 }
