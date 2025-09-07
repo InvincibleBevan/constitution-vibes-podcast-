@@ -1,64 +1,68 @@
 import React, { useEffect, useState } from "react";
 
-export default function App() {
+function App() {
   const [episodes, setEpisodes] = useState([]);
 
   useEffect(() => {
     fetch("/episodes")
       .then((res) => res.json())
       .then((data) => setEpisodes(data))
-      .catch((err) => console.error("Failed to load episodes:", err));
+      .catch((err) => console.error("Error fetching episodes:", err));
   }, []);
 
   return (
-    <div className="w-full h-screen relative overflow-hidden bg-black text-white">
-      {/* Background Video */}
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* Fullscreen video background */}
       <video
         autoPlay
         loop
         muted
         playsInline
-        className="absolute top-0 left-0 w-full h-full object-cover z-0"
+        className="absolute top-0 left-0 w-full h-full object-cover"
       >
         <source src="/static/Kenya_flag.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
       </video>
 
-      {/* Dark overlay for readability */}
-      <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50 z-10"></div>
-
-      {/* Anthem Audio */}
+      {/* Background anthem (plays automatically) */}
       <audio autoPlay loop>
         <source src="/static/anthem.mp3" type="audio/mpeg" />
+        Your browser does not support the audio element.
       </audio>
 
-      {/* Main Content */}
-      <div className="relative z-20 flex flex-col items-center justify-center h-full px-6">
+      {/* Overlay content */}
+      <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center text-white p-6">
         <h1 className="text-4xl md:text-6xl font-bold mb-6 text-center">
-          Constitution Vibes Podcast 🇰🇪
+          Constitution Vibes Podcast
         </h1>
-        <p className="text-lg md:text-2xl mb-10 text-center">
-          Breaking down Kenya’s Constitution with vibes, freedom, and unity.
+        <p className="text-lg md:text-2xl mb-8 text-center max-w-2xl">
+          Kenyan Constitution explained with vibes, sheng, and the spirit of the nation 🇰🇪
         </p>
 
-        {/* Episodes List */}
-        <div className="bg-white bg-opacity-20 p-6 rounded-2xl shadow-lg w-full max-w-2xl">
-          <h2 className="text-2xl font-semibold mb-4 text-center">🎧 Episodes</h2>
+        {/* Episodes list */}
+        <div className="w-full max-w-3xl space-y-4">
           {episodes.length === 0 ? (
-            <p className="text-center">Loading episodes...</p>
+            <p className="text-center text-gray-300">
+              🎙️ No episodes yet… check back soon!
+            </p>
           ) : (
-            <ul className="space-y-4">
-              {episodes.map((ep, i) => (
-                <li key={i} className="flex flex-col items-center bg-black bg-opacity-40 p-4 rounded-xl">
-                  <p className="mb-2 text-lg font-medium">{ep}</p>
-                  <audio controls className="w-full">
-                    <source src={`/episodes/${ep}`} type="audio/mpeg" />
-                  </audio>
-                </li>
-              ))}
-            </ul>
+            episodes.map((ep, idx) => (
+              <div
+                key={idx}
+                className="bg-white bg-opacity-10 p-4 rounded-xl shadow-lg hover:bg-opacity-20 transition"
+              >
+                <h2 className="text-2xl font-semibold">{ep.title}</h2>
+                <p className="text-gray-200">{ep.description}</p>
+                <audio controls className="w-full mt-2">
+                  <source src={ep.file} type="audio/mpeg" />
+                </audio>
+              </div>
+            ))
           )}
         </div>
       </div>
     </div>
   );
 }
+
+export default App;
