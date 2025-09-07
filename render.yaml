@@ -1,26 +1,20 @@
 services:
   - type: web
-    name: constitution-vibes-podcast
+    name: constitution-vibes-backend
     env: python
-    buildCommand: |
-      # 1. Backend dependencies
-      pip install -r requirements.txt
-
-      # 2. Frontend build
-      cd frontend
-      npm install
-      npm run build
-
-      # 3. Move build output to Flask static folder
-      cd ..
-      rm -rf static/*
-      cp -r frontend/dist/* static/
-
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
+    plan: free
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.13
-      - key: NODE_VERSION
-        value: 18
       - key: OPENAI_API_KEY
         sync: false
+
+  - type: web
+    name: constitution-vibes-frontend
+    env: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview -- --port 10000
+    staticPublishPath: dist
+    plan: free
