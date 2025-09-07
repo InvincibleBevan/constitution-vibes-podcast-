@@ -1,37 +1,22 @@
 import os
 from flask import Flask, jsonify, send_from_directory
-from podcast import generate_episode  # Import the function we made
+from podcast import generate_episode
 
-app = Flask(__name__, static_folder="static", static_url_path="/static")
-
-EPISODE_DIR = "episodes"
-
-# Ensure episodes exist on startup
-def ensure_episodes():
-    os.makedirs(EPISODE_DIR, exist_ok=True)
-    files = [f for f in os.listdir(EPISODE_DIR) if f.endswith(".mp3")]
-    if not files:  # Generate only if empty
-        print("🎙️ No episodes found, generating one...")
-        generate_episode("Intro Episode", "Welcome to the Constitution Vibes podcast!")
-
-ensure_episodes()
-
-@app.route("/episodes")
-def get_episodes():
-    episodes = []
-    for file in os.listdir(EPISODE_DIR):
-        if file.endswith(".mp3"):
-            episodes.append({
-                "title": os.path.splitext(file)[0],
-                "description": "Auto-generated podcast episode",
-                "file": f"/{EPISODE_DIR}/{file}"
-            })
-    return jsonify(episodes)
-
-@app.route("/episodes/<path:filename>")
-def serve_episode(filename):
-    return send_from_directory(EPISODE_DIR, filename)
+app = Flask(__name__)
 
 @app.route("/")
-def index():
-    return send_from_directory(app.static_folder, "index.html")
+def home():
+    return jsonify({"message": "Podcast backend is running."})
+
+@app.route("/generate", methods=["POST"])
+def generate():
+    result = generate_episode()
+    return jsonify(result)
+
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    return send_from_directory("static", filename)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
