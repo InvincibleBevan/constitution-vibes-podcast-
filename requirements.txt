@@ -1,6 +1,7 @@
-flask==3.0.3
-gunicorn==23.0.0
-openai==1.43.0
-pydub==0.25.1
-requests==2.32.3
-python-dotenv==1.0.1
+flask
+gunicorn
+openai
+pydub
+python-dotenv
+requests
+tqdm
