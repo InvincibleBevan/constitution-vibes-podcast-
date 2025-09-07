@@ -1,51 +1,37 @@
 import os
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, jsonify, send_from_directory
+from podcast import generate_episode  # Import the function we made
 
-app = Flask(__name__, static_folder="frontend/dist", static_url_path="")
+app = Flask(__name__, static_folder="static", static_url_path="/static")
 
-# --- Config ---
-EPISODES_DIR = os.path.join("static", "episodes")
-STATIC_DIR = "static"
+EPISODE_DIR = "episodes"
 
-os.makedirs(EPISODES_DIR, exist_ok=True)
+# Ensure episodes exist on startup
+def ensure_episodes():
+    os.makedirs(EPISODE_DIR, exist_ok=True)
+    files = [f for f in os.listdir(EPISODE_DIR) if f.endswith(".mp3")]
+    if not files:  # Generate only if empty
+        print("🎙️ No episodes found, generating one...")
+        generate_episode("Intro Episode", "Welcome to the Constitution Vibes podcast!")
 
+ensure_episodes()
 
-# Serve frontend
+@app.route("/episodes")
+def get_episodes():
+    episodes = []
+    for file in os.listdir(EPISODE_DIR):
+        if file.endswith(".mp3"):
+            episodes.append({
+                "title": os.path.splitext(file)[0],
+                "description": "Auto-generated podcast episode",
+                "file": f"/{EPISODE_DIR}/{file}"
+            })
+    return jsonify(episodes)
+
+@app.route("/episodes/<path:filename>")
+def serve_episode(filename):
+    return send_from_directory(EPISODE_DIR, filename)
+
 @app.route("/")
 def index():
     return send_from_directory(app.static_folder, "index.html")
-
-
-# Serve frontend routes (for React router support)
-@app.errorhandler(404)
-def not_found(e):
-    return send_from_directory(app.static_folder, "index.html")
-
-
-# Get list of episodes
-@app.route("/episodes")
-def list_episodes():
-    try:
-        files = [
-            f for f in os.listdir(EPISODES_DIR)
-            if f.endswith(".mp3")
-        ]
-        return jsonify(files)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-# Serve specific episode file
-@app.route("/episodes/<path:filename>")
-def get_episode(filename):
-    return send_from_directory(EPISODES_DIR, filename)
-
-
-# Serve static files (anthem, flag video, etc.)
-@app.route("/static/<path:filename>")
-def static_files(filename):
-    return send_from_directory(STATIC_DIR, filename)
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
